@@ -299,32 +299,42 @@ EOF
 # =========================================================
 # BUILD MQTT APP
 # =========================================================
-
-log_step "BUILD MQTT APP"
+log_step "DOWNLOAD MQTT APP"
 
 mkdir -p "${APP_SRC_DIR}"
-
 cd "${APP_SRC_DIR}"
 
-APP_C_URL="https://raw.githubusercontent.com/dinhquanghaICTU/IMX6ULL_doccument/main/My_doc/FORLINX_OKM6ULL-S/my_doc/script_auto/app.c"
+APP_URL="https://raw.githubusercontent.com/dinhquanghaICTU/HNN_OKM6ULL_OTA/main/build/mqtt_led_app"
 
-log_step "Downloading app.c from GitHub..."
+log_step "Downloading mqtt_led_app from GitHub..."
 
-if wget -q -O app.c "$APP_C_URL"; then
-    log_ok "Downloaded app.c successfully"
+set +e
+
+wget --no-check-certificate --tries=3 --timeout=15 \
+     -q -O mqtt_led_app "$APP_URL"
+WGET_STATUS=$?
+
+if [ $WGET_STATUS -ne 0 ] || [ ! -s mqtt_led_app ]; then
+    log_warn "wget failed (code=$WGET_STATUS), trying curl..."
+    curl -fsSL --retry 3 --connect-timeout 15 \
+         -o mqtt_led_app "$APP_URL"
+    CURL_STATUS=$?
+    if [ $CURL_STATUS -ne 0 ] || [ ! -s mqtt_led_app ]; then
+        log_warn "Failed to download mqtt_led_app -> abort"
+        exit 1
+    fi
+    log_ok "Downloaded via curl"
 else
-    log_warn "Failed to download app.c -> abort"
-    exit 1
+    log_ok "Downloaded mqtt_led_app successfully"
 fi
 
-source "${TOOLCHAIN}"
+set -e
 
-${CC} app.c -o mqtt_led_app
+chmod +x mqtt_led_app
 
 mkdir -p "${ROOTFS}/usr/bin"
-
 cp mqtt_led_app "${ROOTFS}/usr/bin/"
-
+log_ok "Copied mqtt_led_app to rootfs"
 # =========================================================
 # RC.LOCAL
 # =========================================================
