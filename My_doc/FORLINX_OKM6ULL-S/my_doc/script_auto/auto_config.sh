@@ -299,14 +299,14 @@ EOF
 # =========================================================
 # BUILD MQTT APP
 # =========================================================
-log_step "DOWNLOAD MQTT APP"
+log "DOWNLOAD MQTT APP"
 
 mkdir -p "${APP_SRC_DIR}"
 cd "${APP_SRC_DIR}"
 
 APP_URL="https://raw.githubusercontent.com/dinhquanghaICTU/HNN_OKM6ULL_OTA/main/build/mqtt_led_app"
 
-log_step "Downloading mqtt_led_app from GitHub..."
+log "Downloading mqtt_led_app from GitHub..."
 
 set +e
 
@@ -323,9 +323,9 @@ if [ $WGET_STATUS -ne 0 ] || [ ! -s mqtt_led_app ]; then
         log_warn "Failed to download mqtt_led_app -> abort"
         exit 1
     fi
-    log_ok "Downloaded via curl"
+    log "Downloaded via curl"
 else
-    log_ok "Downloaded mqtt_led_app successfully"
+    log "Downloaded mqtt_led_app successfully"
 fi
 
 set -e
@@ -334,7 +334,8 @@ chmod +x mqtt_led_app
 
 mkdir -p "${ROOTFS}/usr/bin"
 cp mqtt_led_app "${ROOTFS}/usr/bin/"
-log_ok "Copied mqtt_led_app to rootfs"
+log "Copied mqtt_led_app to rootfs"
+log "=================================================================="
 # =========================================================
 # RC.LOCAL
 # =========================================================
