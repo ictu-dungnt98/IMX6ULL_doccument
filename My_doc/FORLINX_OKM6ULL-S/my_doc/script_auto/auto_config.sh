@@ -77,7 +77,7 @@ make imx6ull_defconfig
 
 log "SET CUSTOM VERSION"
 
-scripts/config --set-str LOCALVERSION "-quanghadev"
+scripts/config --set-str LOCALVERSION "-quanghaHNN"
 
 # =========================================================
 # WIFI CONFIG
