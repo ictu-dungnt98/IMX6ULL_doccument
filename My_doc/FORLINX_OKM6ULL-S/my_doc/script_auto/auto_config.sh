@@ -343,57 +343,41 @@ log "Copied mqtt_led_app to rootfs"
 log "=================================================================="
 
 # =========================================================
-# BUILD U-BOOT FW_PRINTENV / FW_SETENV FOR ARM
+# DOWNLOAD U-BOOT ENV TOOLS
 # =========================================================
 
-log "BUILD U-BOOT FW_PRINTENV FOR ARM"
+log "DOWNLOAD U-BOOT ENV TOOLS"
 
-UBOOT_VER="2022.04"
-UBOOT_TARBALL="${HOME_DIR}/u-boot-${UBOOT_VER}.tar.bz2"
-UBOOT_SRC="${HOME_DIR}/u-boot-${UBOOT_VER}"
-
-cd "${HOME_DIR}"
-
-if [ ! -f "${UBOOT_TARBALL}" ]; then
-    wget -O "${UBOOT_TARBALL}" \
-        "https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VER}.tar.bz2"
-fi
-
-rm -rf "${UBOOT_SRC}"
-tar xjf "${UBOOT_TARBALL}"
-
-source "${TOOLCHAIN}"
-
-cd "${UBOOT_SRC}"
-
-${CC} \
-    -Iinclude \
-    -Itools/env \
-    -Itools \
-    -DUSE_HOSTCC \
-    -o fw_printenv \
-    tools/env/fw_env_main.c \
-    tools/env/fw_env.c \
-    tools/env/env_attr.c \
-    tools/env/env_flags.c \
-    tools/env/crc32.c \
-    tools/env/ctype.c \
-    tools/env/linux_string.c
+FW_BASE_URL="https://github.com/dinhquanghaICTU/IMX6ULL_doccument/releases/download/v1.0"
 
 mkdir -p "${ROOTFS}/usr/bin"
+mkdir -p "${ROOTFS}/usr/lib"
 mkdir -p "${ROOTFS}/etc"
 
-cp fw_printenv "${ROOTFS}/usr/bin/fw_printenv"
+wget --no-check-certificate -q -O "${ROOTFS}/usr/bin/fw_printenv" \
+    "${FW_BASE_URL}/fw_printenv"
 
-cd "${ROOTFS}/usr/bin"
-ln -sf fw_printenv fw_setenv
-chmod +x fw_printenv
+wget --no-check-certificate -q -O "${ROOTFS}/usr/bin/fw_setenv" \
+    "${FW_BASE_URL}/fw_setenv"
+
+wget --no-check-certificate -q -O "${ROOTFS}/usr/lib/libubootenv.so.0.3.2" \
+    "${FW_BASE_URL}/libubootenv.so.0.3.2"
+
+chmod +x "${ROOTFS}/usr/bin/fw_printenv"
+chmod +x "${ROOTFS}/usr/bin/fw_setenv"
+
+cd "${ROOTFS}/usr/lib"
+ln -sf libubootenv.so.0.3.2 libubootenv.so.0
+ln -sf libubootenv.so.0.3.2 libubootenv.so
 
 cat > "${ROOTFS}/etc/fw_env.config" <<'EOF'
 /dev/mmcblk1 0x400000 0x2000
 EOF
 
-file "${ROOTFS}/usr/bin/fw_printenv"
+echo "Check fw tools:"
+ls -lh "${ROOTFS}/usr/bin/fw_printenv" \
+       "${ROOTFS}/usr/bin/fw_setenv" \
+       "${ROOTFS}/usr/lib/libubootenv.so.0.3.2"
 
 # =========================================================
 # OTA CONFIRM BOOT
