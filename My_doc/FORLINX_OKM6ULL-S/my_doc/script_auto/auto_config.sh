@@ -441,12 +441,28 @@ cp src/fw_setenv "${ROOTFS}/usr/bin/fw_setenv"
 
 cp src/libubootenv.so* "${ROOTFS}/usr/lib/"
 
+cd "${ROOTFS}/usr/lib"
+
+ln -sf libubootenv.so.0.3.2 libubootenv.so
+ln -sf libubootenv.so.0.3.2 libubootenv.so.0
+
 chmod +x "${ROOTFS}/usr/bin/fw_printenv"
 
 chmod +x "${ROOTFS}/usr/bin/fw_setenv"
 
 cat > "${ROOTFS}/etc/fw_env.config" <<'EOF'
-/dev/mmcblk1 0x400000 0x2000
+/dev/mmcblk1 0xC0000 0x2000 0x200
+EOF
+
+
+
+
+cat > "${ROOTFS}/etc/u-boot-initial-env" <<'EOF'
+boot_slot=A
+rollback_slot=A
+upgrade_available=0
+bootcount=0
+bootlimit=3
 EOF
 
 # =========================================================
@@ -482,6 +498,7 @@ fi
 echo "ota-confirm: slot=$SLOT"
 
 fw_setenv boot_slot "$SLOT"
+fw_setenv rollback_slot "$SLOT"
 fw_setenv upgrade_available 0
 fw_setenv bootcount 0
 
@@ -532,7 +549,7 @@ do
 
         echo "WiFi ready -> start mqtt_led_app"
 
-        /usr/bin/mqtt_led_app
+        /usr/bin/mqtt_led_app >> /var/log/mqtt_led_app.log 2>&1
 
         echo "mqtt_led_app exited -> restart"
     else
@@ -685,6 +702,9 @@ echo "================= extract rootfs A/B ================="
 
 sudo tar --numeric-owner -xpf "$ROOTFS" -C "$ROOT_A_MNT"
 sudo tar --numeric-owner -xpf "$ROOTFS" -C "$ROOT_B_MNT"
+
+
+sync
 
 echo "================= create data dirs ================="
 
