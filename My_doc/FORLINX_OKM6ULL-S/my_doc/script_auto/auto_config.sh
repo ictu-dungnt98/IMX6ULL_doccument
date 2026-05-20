@@ -51,7 +51,8 @@ sudo apt install -y \
     u-boot-tools \
     parted \
     dosfstools \
-    wget
+    wget \
+    libgnutls28-dev
 
 # =========================================================
 # LOAD TOOLCHAIN
@@ -336,6 +337,75 @@ mkdir -p "${ROOTFS}/usr/bin"
 cp mqtt_led_app "${ROOTFS}/usr/bin/"
 log "Copied mqtt_led_app to rootfs"
 log "=================================================================="
+
+# =========================================================
+# BUILD U-BOOT FW_PRINTENV / FW_SETENV
+# =========================================================
+
+log "BUILD U-BOOT FW_PRINTENV"
+
+cd "${HOME_DIR}"
+
+if [ ! -d "${UBOOT_SRC}" ]; then
+    wget -O "u-boot-${UBOOT_VER}.tar.bz2" \
+        "https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VER}.tar.bz2"
+
+    tar xjf "u-boot-${UBOOT_VER}.tar.bz2"
+fi
+
+cd "${UBOOT_SRC}"
+
+source "${TOOLCHAIN}"
+
+make distclean || true
+make sandbox_defconfig
+
+make CROSS_COMPILE="${TARGET_PREFIX}" \
+     HOSTCC=gcc \
+     envtools \
+     -j"$(nproc)"
+
+mkdir -p "${ROOTFS}/usr/bin"
+mkdir -p "${ROOTFS}/etc"
+
+cp tools/env/fw_printenv "${ROOTFS}/usr/bin/fw_printenv"
+
+cd "${ROOTFS}/usr/bin"
+ln -sf fw_printenv fw_setenv
+
+chmod +x "${ROOTFS}/usr/bin/fw_printenv"
+
+cat > "${ROOTFS}/etc/fw_env.config" <<'EOF'
+/dev/mmcblk1 0x400000 0x2000
+EOF
+
+# =========================================================
+# OTA CONFIRM BOOT
+# =========================================================
+
+log "CREATE OTA CONFIRM BOOT SCRIPT"
+
+cat > "${ROOTFS}/usr/bin/ota-confirm-boot.sh" <<'EOF'
+#!/bin/sh
+
+SLOT=$(sed -n 's/.*ota.slot=\([^ ]*\).*/\1/p' /proc/cmdline)
+
+if [ -z "$SLOT" ]; then
+    echo "ota-confirm: no ota.slot"
+    exit 0
+fi
+
+echo "ota-confirm: slot=$SLOT"
+
+fw_setenv boot_slot "$SLOT"
+fw_setenv upgrade_available 0
+fw_setenv bootcount 0
+
+exit 0
+EOF
+
+chmod +x "${ROOTFS}/usr/bin/ota-confirm-boot.sh"
+
 # =========================================================
 # RC.LOCAL
 # =========================================================
@@ -344,6 +414,8 @@ log "CREATE RC.LOCAL"
 
 cat > "${ROOTFS}/etc/rc.local" <<'EOF'
 #!/bin/sh
+
+/usr/bin/ota-confirm-boot.sh &
 
 (
 while true
@@ -445,14 +517,18 @@ KERNEL="zImage"
 DTB="okmx6ull-s-emmc.dtb"
 
 BOOT_MNT="/mnt/wic_boot"
-ROOT_MNT="/mnt/wic_root"
+ROOT_A_MNT="/mnt/wic_root_a"
+ROOT_B_MNT="/mnt/wic_root_b"
+DATA_MNT="/mnt/wic_data"
 
 cleanup() {
 
     sync || true
 
     sudo umount "$BOOT_MNT" 2>/dev/null || true
-    sudo umount "$ROOT_MNT" 2>/dev/null || true
+    sudo umount "$ROOT_A_MNT" 2>/dev/null || true
+    sudo umount "$ROOT_B_MNT" 2>/dev/null || true
+    sudo umount "$DATA_MNT" 2>/dev/null || true
 
     if [ -n "${LOOP_DEV:-}" ]; then
         sudo losetup -d "$LOOP_DEV" || true
@@ -465,17 +541,23 @@ echo "================= create image ================="
 
 rm -f "$IMG"
 
-dd if=/dev/zero of="$IMG" bs=1M count=2048
+# 4GB image:
+# p1 = BOOT     256MB
+# p2 = rootfs_A ~1.5GB
+# p3 = rootfs_B ~1.5GB
+# p4 = data     remaining
+dd if=/dev/zero of="$IMG" bs=1M count=4096
 
 echo "================= create partition ================="
 
 parted -s "$IMG" mklabel msdos
 
-parted -s "$IMG" mkpart primary fat32 8MiB 128MiB
-
+parted -s "$IMG" mkpart primary fat32 8MiB 264MiB
 parted -s "$IMG" set 1 boot on
 
-parted -s "$IMG" mkpart primary ext4 128MiB 100%
+parted -s "$IMG" mkpart primary ext4 264MiB 1800MiB
+parted -s "$IMG" mkpart primary ext4 1800MiB 3336MiB
+parted -s "$IMG" mkpart primary ext4 3336MiB 100%
 
 echo "================= attach loop device ================="
 
@@ -485,30 +567,56 @@ echo "LOOP_DEV = $LOOP_DEV"
 
 echo "================= format partitions ================="
 
-sudo mkfs.vfat -F 32 "${LOOP_DEV}p1"
+sudo mkfs.vfat -F 32 -n BOOT "${LOOP_DEV}p1"
 
-sudo mkfs.ext4 -F "${LOOP_DEV}p2"
+sudo mkfs.ext4 -F -L rootfs_A "${LOOP_DEV}p2"
+sudo mkfs.ext4 -F -L rootfs_B "${LOOP_DEV}p3"
+sudo mkfs.ext4 -F -L data "${LOOP_DEV}p4"
 
 echo "================= mount partitions ================="
 
 sudo mkdir -p "$BOOT_MNT"
-sudo mkdir -p "$ROOT_MNT"
+sudo mkdir -p "$ROOT_A_MNT"
+sudo mkdir -p "$ROOT_B_MNT"
+sudo mkdir -p "$DATA_MNT"
 
 sudo mount "${LOOP_DEV}p1" "$BOOT_MNT"
+sudo mount "${LOOP_DEV}p2" "$ROOT_A_MNT"
+sudo mount "${LOOP_DEV}p3" "$ROOT_B_MNT"
+sudo mount "${LOOP_DEV}p4" "$DATA_MNT"
 
-sudo mount "${LOOP_DEV}p2" "$ROOT_MNT"
+echo "================= copy boot files A/B ================="
 
-echo "================= copy boot files ================="
+sudo cp "$KERNEL" "$BOOT_MNT/zImage_A"
+sudo cp "$KERNEL" "$BOOT_MNT/zImage_B"
 
-sudo cp "$KERNEL" "$BOOT_MNT/"
+sudo cp "$DTB" "$BOOT_MNT/okmx6ull-s-emmc_A.dtb"
+sudo cp "$DTB" "$BOOT_MNT/okmx6ull-s-emmc_B.dtb"
 
-sudo cp "$DTB" "$BOOT_MNT/"
+# Optional compatibility names for old bootcmd
+sudo cp "$KERNEL" "$BOOT_MNT/zImage"
+sudo cp "$DTB" "$BOOT_MNT/okmx6ull-s-emmc.dtb"
 
-echo "================= extract rootfs ================="
+echo "================= extract rootfs A/B ================="
 
-sudo tar --numeric-owner -xpf "$ROOTFS" -C "$ROOT_MNT"
+sudo tar --numeric-owner -xpf "$ROOTFS" -C "$ROOT_A_MNT"
+sudo tar --numeric-owner -xpf "$ROOTFS" -C "$ROOT_B_MNT"
+
+echo "================= create data dirs ================="
+
+sudo mkdir -p "$DATA_MNT/ota"
+sudo mkdir -p "$DATA_MNT/log"
+sudo mkdir -p "$DATA_MNT/app"
 
 sync
+
+echo "================= verify partitions ================="
+
+sudo fdisk -l "$LOOP_DEV" || true
+
+echo "================= verify boot files ================="
+
+ls -lh "$BOOT_MNT"
 
 echo "================= WIC DONE ================="
 
