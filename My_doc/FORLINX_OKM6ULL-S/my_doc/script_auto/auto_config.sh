@@ -350,30 +350,52 @@ log "=================================================================="
 log "BUILD LIBUBOOTENV FOR TARGET ROOTFS"
 
 LIBUBOOTENV_VER="0.3.2"
-LIBUBOOTENV_SRC="${HOME_DIR}/libubootenv-${LIBUBOOTENV_VER}"
+
 LIBUBOOTENV_TAR="${HOME_DIR}/libubootenv-${LIBUBOOTENV_VER}.tar.gz"
+
+LIBUBOOTENV_SRC="${HOME_DIR}/libubootenv-${LIBUBOOTENV_VER}"
 
 cd "${HOME_DIR}"
 
 if [ ! -f "${LIBUBOOTENV_TAR}" ]; then
-    wget --no-check-certificate -O "${LIBUBOOTENV_TAR}" \
+
+    wget --no-check-certificate \
+        -O "${LIBUBOOTENV_TAR}" \
         "https://github.com/sbabic/libubootenv/archive/refs/tags/v${LIBUBOOTENV_VER}.tar.gz"
 fi
 
 rm -rf "${LIBUBOOTENV_SRC}"
+
 tar xzf "${LIBUBOOTENV_TAR}"
 
-# source SDK hãng/rootfs cũ
+# =========================================================
+# LOAD TOOLCHAIN
+# =========================================================
+
 source "${TOOLCHAIN}"
+
+export CC="${TARGET_PREFIX}gcc"
+export CXX="${TARGET_PREFIX}g++"
+
+export CFLAGS="-march=armv7-a -mfpu=neon -mfloat-abi=hard"
+export CXXFLAGS="${CFLAGS}"
+export LDFLAGS="${CFLAGS}"
+
+# =========================================================
+# BUILD
+# =========================================================
 
 cd "${LIBUBOOTENV_SRC}"
 
 rm -rf build
+
 mkdir build
+
 cd build
 
 cat > toolchain.cmake <<EOF
 set(CMAKE_SYSTEM_NAME Linux)
+
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
 set(CMAKE_SYSROOT "$SDKTARGETSYSROOT")
@@ -381,12 +403,18 @@ set(CMAKE_SYSROOT "$SDKTARGETSYSROOT")
 set(CMAKE_C_COMPILER "${TARGET_PREFIX}gcc")
 set(CMAKE_CXX_COMPILER "${TARGET_PREFIX}g++")
 
-set(CMAKE_C_FLAGS "$CFLAGS")
-set(CMAKE_EXE_LINKER_FLAGS "$LDFLAGS")
+set(CMAKE_C_FLAGS "-march=armv7-a -mfpu=neon -mfloat-abi=hard")
+
+set(CMAKE_CXX_FLAGS "-march=armv7-a -mfpu=neon -mfloat-abi=hard")
+
+set(CMAKE_EXE_LINKER_FLAGS "-march=armv7-a -mfpu=neon -mfloat-abi=hard")
 
 set(CMAKE_FIND_ROOT_PATH "$SDKTARGETSYSROOT")
+
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+
 set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 EOF
 
@@ -397,25 +425,43 @@ cmake .. \
 
 make -j"$(nproc)"
 
+# =========================================================
+# INSTALL TO ROOTFS
+# =========================================================
+
 mkdir -p "${ROOTFS}/usr/bin"
+
 mkdir -p "${ROOTFS}/usr/lib"
+
 mkdir -p "${ROOTFS}/etc"
 
 cp src/fw_printenv "${ROOTFS}/usr/bin/fw_printenv"
+
 cp src/fw_setenv "${ROOTFS}/usr/bin/fw_setenv"
+
 cp src/libubootenv.so* "${ROOTFS}/usr/lib/"
 
 chmod +x "${ROOTFS}/usr/bin/fw_printenv"
+
 chmod +x "${ROOTFS}/usr/bin/fw_setenv"
 
 cat > "${ROOTFS}/etc/fw_env.config" <<'EOF'
 /dev/mmcblk1 0x400000 0x2000
 EOF
 
-echo "Check fw tools:"
+# =========================================================
+# VERIFY
+# =========================================================
+
+echo "================ VERIFY FW TOOLS ================"
+
 file "${ROOTFS}/usr/bin/fw_printenv"
+
 file "${ROOTFS}/usr/bin/fw_setenv"
+
 ls -lh "${ROOTFS}/usr/lib/libubootenv.so"*
+
+echo "================================================="
 
 # =========================================================
 # OTA CONFIRM BOOT
