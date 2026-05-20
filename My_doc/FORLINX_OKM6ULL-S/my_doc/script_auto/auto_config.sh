@@ -366,17 +366,24 @@ source "${TOOLCHAIN}"
 
 cd "${UBOOT_SRC}"
 
-make distclean || true
-make tools-only_defconfig
-
-make envtools \
-    CROSS_COMPILE="${TARGET_PREFIX}" \
-    -j"$(nproc)"
+${CC} \
+    -Iinclude \
+    -Itools/env \
+    -Itools \
+    -DUSE_HOSTCC \
+    -o fw_printenv \
+    tools/env/fw_env_main.c \
+    tools/env/fw_env.c \
+    tools/env/env_attr.c \
+    tools/env/env_flags.c \
+    tools/env/crc32.c \
+    tools/env/ctype.c \
+    tools/env/linux_string.c
 
 mkdir -p "${ROOTFS}/usr/bin"
 mkdir -p "${ROOTFS}/etc"
 
-cp tools/env/fw_printenv "${ROOTFS}/usr/bin/fw_printenv"
+cp fw_printenv "${ROOTFS}/usr/bin/fw_printenv"
 
 cd "${ROOTFS}/usr/bin"
 ln -sf fw_printenv fw_setenv
@@ -387,7 +394,6 @@ cat > "${ROOTFS}/etc/fw_env.config" <<'EOF'
 EOF
 
 file "${ROOTFS}/usr/bin/fw_printenv"
-
 
 # =========================================================
 # OTA CONFIRM BOOT
