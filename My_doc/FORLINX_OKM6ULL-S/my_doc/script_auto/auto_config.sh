@@ -343,17 +343,10 @@ log "Copied mqtt_led_app to rootfs"
 log "=================================================================="
 
 # =========================================================
-# BUILD U-BOOT FW_PRINTENV / FW_SETENV
+# BUILD U-BOOT FW_PRINTENV / FW_SETENV FOR ARM
 # =========================================================
 
-log "BUILD U-BOOT FW_PRINTENV"
-
-sudo apt install -y \
-    build-essential \
-    bison \
-    flex \
-    libssl-dev \
-    libelf-dev
+log "BUILD U-BOOT FW_PRINTENV FOR ARM"
 
 UBOOT_VER="2022.04"
 UBOOT_SRC="${HOME_DIR}/u-boot-${UBOOT_VER}"
@@ -361,20 +354,23 @@ UBOOT_SRC="${HOME_DIR}/u-boot-${UBOOT_VER}"
 cd "${HOME_DIR}"
 
 if [ ! -d "${UBOOT_SRC}" ]; then
-
     wget -O "u-boot-${UBOOT_VER}.tar.bz2" \
         "https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VER}.tar.bz2"
 
     tar xjf "u-boot-${UBOOT_VER}.tar.bz2"
 fi
 
+source "${TOOLCHAIN}"
+
 cd "${UBOOT_SRC}"
 
 make distclean || true
-
 make tools-only_defconfig
 
-make envtools -j"$(nproc)"
+make tools/env/fw_printenv \
+    HOSTCC="${CC}" \
+    HOSTSTRIP="${STRIP}" \
+    -j"$(nproc)"
 
 mkdir -p "${ROOTFS}/usr/bin"
 mkdir -p "${ROOTFS}/etc"
@@ -382,7 +378,6 @@ mkdir -p "${ROOTFS}/etc"
 cp tools/env/fw_printenv "${ROOTFS}/usr/bin/fw_printenv"
 
 cd "${ROOTFS}/usr/bin"
-
 ln -sf fw_printenv fw_setenv
 
 chmod +x fw_printenv
