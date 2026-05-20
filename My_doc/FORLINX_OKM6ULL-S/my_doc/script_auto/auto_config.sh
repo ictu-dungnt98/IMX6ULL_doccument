@@ -56,7 +56,8 @@ sudo apt install -y \
     parted \
     dosfstools \
     wget \
-    libgnutls28-dev
+    libgnutls28-dev \
+    cmake
 
 # =========================================================
 # LOAD TOOLCHAIN
