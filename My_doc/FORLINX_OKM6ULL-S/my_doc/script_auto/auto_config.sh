@@ -348,9 +348,20 @@ log "=================================================================="
 
 log "BUILD U-BOOT FW_PRINTENV"
 
+sudo apt install -y \
+    build-essential \
+    bison \
+    flex \
+    libssl-dev \
+    libelf-dev
+
+UBOOT_VER="2022.04"
+UBOOT_SRC="${HOME_DIR}/u-boot-${UBOOT_VER}"
+
 cd "${HOME_DIR}"
 
 if [ ! -d "${UBOOT_SRC}" ]; then
+
     wget -O "u-boot-${UBOOT_VER}.tar.bz2" \
         "https://ftp.denx.de/pub/u-boot/u-boot-${UBOOT_VER}.tar.bz2"
 
@@ -359,15 +370,11 @@ fi
 
 cd "${UBOOT_SRC}"
 
-source "${TOOLCHAIN}"
-
 make distclean || true
-make sandbox_defconfig
 
-make CROSS_COMPILE="${TARGET_PREFIX}" \
-     HOSTCC=gcc \
-     envtools \
-     -j"$(nproc)"
+make tools-only_defconfig
+
+make envtools -j"$(nproc)"
 
 mkdir -p "${ROOTFS}/usr/bin"
 mkdir -p "${ROOTFS}/etc"
@@ -375,9 +382,10 @@ mkdir -p "${ROOTFS}/etc"
 cp tools/env/fw_printenv "${ROOTFS}/usr/bin/fw_printenv"
 
 cd "${ROOTFS}/usr/bin"
+
 ln -sf fw_printenv fw_setenv
 
-chmod +x "${ROOTFS}/usr/bin/fw_printenv"
+chmod +x fw_printenv
 
 cat > "${ROOTFS}/etc/fw_env.config" <<'EOF'
 /dev/mmcblk1 0x400000 0x2000
