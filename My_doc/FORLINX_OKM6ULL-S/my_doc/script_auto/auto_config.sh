@@ -12,6 +12,10 @@ KERNEL_SRC="${HOME_DIR}/work"
 ROOTFS="${KERNEL_SRC}/rootfs"
 FLASH_DIR="${HOME_DIR}/flash"
 
+
+UBOOT_VER="2022.04"
+UBOOT_SRC="${HOME_DIR}/u-boot-${UBOOT_VER}"
+
 MOSQ_VER="1.6.15"
 MOSQ_SRC="${HOME_DIR}/mosquitto-${MOSQ_VER}"
 
