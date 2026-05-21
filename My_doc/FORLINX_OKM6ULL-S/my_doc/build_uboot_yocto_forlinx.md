@@ -315,5 +315,7 @@ ${BSPDIR}  ← biến Yocto trỏ đến ~/imx-yocto-new
             → ai clone repo về máy khác vẫn chạy được
 Tại sao lần đầu bị lỗi: Lệnh echo cũ thêm dòng có \\ ở cuối và nằm ngoài block BBLAYERS = " \\ ... " của Yocto — bitbake không parse được vì cú pháp block multiline đó đã đóng rồi. Dùng BBLAYERS += là cách đúng để thêm layer bên ngoài block.
 
-
 )
+
+
+
