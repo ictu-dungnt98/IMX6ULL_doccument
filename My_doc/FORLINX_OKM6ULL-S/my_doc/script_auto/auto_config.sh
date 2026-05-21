@@ -604,17 +604,75 @@ echo "================= create wic script ================="
 
 cd "$FLASH_DIR"
 
+cat > boot.cmd <<'EOF'
+echo "Running A/B OTA boot.scr"
+
+if test -z "${boot_slot}"; then
+    setenv boot_slot A
+fi
+
+if test -z "${rollback_slot}"; then
+    setenv rollback_slot A
+fi
+
+if test ${boot_slot} = B; then
+    setenv image zImage_B
+    setenv fdt_file okmx6ull-s-emmc_B.dtb
+    setenv mmcroot /dev/mmcblk1p3 rootwait rw
+else
+    setenv image zImage_A
+    setenv fdt_file okmx6ull-s-emmc_A.dtb
+    setenv mmcroot /dev/mmcblk1p2 rootwait rw
+fi
+
+setenv bootargs console=${console},${baudrate} calibrate=${calibrate} cma=64M root=${mmcroot} ota.slot=${boot_slot}
+
+echo BOOT_SLOT=${boot_slot}
+echo ROOT=${mmcroot}
+printenv bootargs
+
+fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}
+fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}
+bootz ${loadaddr} - ${fdt_addr}
+
+echo "BOOT FAILED, rollback..."
+
+setenv boot_slot ${rollback_slot}
+setenv upgrade_available 0
+setenv bootcount 0
+saveenv
+
+if test ${boot_slot} = B; then
+    setenv image zImage_B
+    setenv fdt_file okmx6ull-s-emmc_B.dtb
+    setenv mmcroot /dev/mmcblk1p3 rootwait rw
+else
+    setenv image zImage_A
+    setenv fdt_file okmx6ull-s-emmc_A.dtb
+    setenv mmcroot /dev/mmcblk1p2 rootwait rw
+fi
+
+setenv bootargs console=${console},${baudrate} calibrate=${calibrate} cma=64M root=${mmcroot} ota.slot=${boot_slot}
+
+echo ROLLBACK_SLOT=${boot_slot}
+echo ROOT=${mmcroot}
+printenv bootargs
+
+fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}
+fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}
+bootz ${loadaddr} - ${fdt_addr}
+EOF
+
+mkimage -A arm -T script -C none -n "A/B OTA boot script" -d boot.cmd boot.scr
+
 cat > create_rootfs_wifi_wic.sh <<'EOF'
 #!/usr/bin/env bash
 
 set -Eeuo pipefail
 
 IMG="rootfs_wifi.wic"
-
 ROOTFS="rootfs-console.tar.bz2"
-
 KERNEL="zImage"
-
 DTB="okmx6ull-s-emmc.dtb"
 
 BOOT_MNT="/mnt/wic_boot"
@@ -624,7 +682,6 @@ DATA_MNT="/mnt/wic_data"
 
 cleanup() {
     sync || true
-
     sudo umount "$BOOT_MNT" 2>/dev/null || true
     sudo umount "$ROOT_A_MNT" 2>/dev/null || true
     sudo umount "$ROOT_B_MNT" 2>/dev/null || true
@@ -641,28 +698,15 @@ echo "================= create image ================="
 
 rm -f "$IMG"
 
-# 2GB image:
-# p1 = BOOT     64MB
-# p2 = rootfs_A 768MB
-# p3 = rootfs_B 768MB
-# p4 = data     remaining ~440MB
 dd if=/dev/zero of="$IMG" bs=1M count=2048
 
 echo "================= create partition ================="
 
 parted -s "$IMG" mklabel msdos
-
-# BOOT: 8MiB -> 72MiB = 64MiB
 parted -s "$IMG" mkpart primary fat32 8MiB 72MiB
 parted -s "$IMG" set 1 boot on
-
-# rootfs_A: 72MiB -> 840MiB = 768MiB
 parted -s "$IMG" mkpart primary ext4 72MiB 840MiB
-
-# rootfs_B: 840MiB -> 1608MiB = 768MiB
 parted -s "$IMG" mkpart primary ext4 840MiB 1608MiB
-
-# DATA: remaining
 parted -s "$IMG" mkpart primary ext4 1608MiB 100%
 
 echo "================= attach loop device ================="
@@ -674,17 +718,13 @@ echo "LOOP_DEV = $LOOP_DEV"
 echo "================= format partitions ================="
 
 sudo mkfs.vfat -F 32 -n BOOT "${LOOP_DEV}p1"
-
 sudo mkfs.ext4 -F -L rootfs_A "${LOOP_DEV}p2"
 sudo mkfs.ext4 -F -L rootfs_B "${LOOP_DEV}p3"
 sudo mkfs.ext4 -F -L data "${LOOP_DEV}p4"
 
 echo "================= mount partitions ================="
 
-sudo mkdir -p "$BOOT_MNT"
-sudo mkdir -p "$ROOT_A_MNT"
-sudo mkdir -p "$ROOT_B_MNT"
-sudo mkdir -p "$DATA_MNT"
+sudo mkdir -p "$BOOT_MNT" "$ROOT_A_MNT" "$ROOT_B_MNT" "$DATA_MNT"
 
 sudo mount "${LOOP_DEV}p1" "$BOOT_MNT"
 sudo mount "${LOOP_DEV}p2" "$ROOT_A_MNT"
@@ -699,9 +739,10 @@ sudo cp "$KERNEL" "$BOOT_MNT/zImage_B"
 sudo cp "$DTB" "$BOOT_MNT/okmx6ull-s-emmc_A.dtb"
 sudo cp "$DTB" "$BOOT_MNT/okmx6ull-s-emmc_B.dtb"
 
-# Compatibility fallback
 sudo cp "$KERNEL" "$BOOT_MNT/zImage"
 sudo cp "$DTB" "$BOOT_MNT/okmx6ull-s-emmc.dtb"
+
+sudo cp boot.scr "$BOOT_MNT/boot.scr"
 
 echo "================= extract rootfs A/B ================="
 
@@ -712,9 +753,7 @@ sync
 
 echo "================= create data dirs ================="
 
-sudo mkdir -p "$DATA_MNT/ota"
-sudo mkdir -p "$DATA_MNT/log"
-sudo mkdir -p "$DATA_MNT/app"
+sudo mkdir -p "$DATA_MNT/ota" "$DATA_MNT/log" "$DATA_MNT/app"
 
 sync
 
