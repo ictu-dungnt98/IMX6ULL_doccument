@@ -623,7 +623,6 @@ ROOT_B_MNT="/mnt/wic_root_b"
 DATA_MNT="/mnt/wic_data"
 
 cleanup() {
-
     sync || true
 
     sudo umount "$BOOT_MNT" 2>/dev/null || true
@@ -642,23 +641,29 @@ echo "================= create image ================="
 
 rm -f "$IMG"
 
-# 4GB image:
-# p1 = BOOT     256MB
-# p2 = rootfs_A ~1.5GB
-# p3 = rootfs_B ~1.5GB
-# p4 = data     remaining
-dd if=/dev/zero of="$IMG" bs=1M count=4096
+# 2GB image:
+# p1 = BOOT     64MB
+# p2 = rootfs_A 768MB
+# p3 = rootfs_B 768MB
+# p4 = data     remaining ~440MB
+dd if=/dev/zero of="$IMG" bs=1M count=2048
 
 echo "================= create partition ================="
 
 parted -s "$IMG" mklabel msdos
 
-parted -s "$IMG" mkpart primary fat32 8MiB 264MiB
+# BOOT: 8MiB -> 72MiB = 64MiB
+parted -s "$IMG" mkpart primary fat32 8MiB 72MiB
 parted -s "$IMG" set 1 boot on
 
-parted -s "$IMG" mkpart primary ext4 264MiB 1800MiB
-parted -s "$IMG" mkpart primary ext4 1800MiB 3336MiB
-parted -s "$IMG" mkpart primary ext4 3336MiB 100%
+# rootfs_A: 72MiB -> 840MiB = 768MiB
+parted -s "$IMG" mkpart primary ext4 72MiB 840MiB
+
+# rootfs_B: 840MiB -> 1608MiB = 768MiB
+parted -s "$IMG" mkpart primary ext4 840MiB 1608MiB
+
+# DATA: remaining
+parted -s "$IMG" mkpart primary ext4 1608MiB 100%
 
 echo "================= attach loop device ================="
 
@@ -694,7 +699,7 @@ sudo cp "$KERNEL" "$BOOT_MNT/zImage_B"
 sudo cp "$DTB" "$BOOT_MNT/okmx6ull-s-emmc_A.dtb"
 sudo cp "$DTB" "$BOOT_MNT/okmx6ull-s-emmc_B.dtb"
 
-# Optional compatibility names for old bootcmd
+# Compatibility fallback
 sudo cp "$KERNEL" "$BOOT_MNT/zImage"
 sudo cp "$DTB" "$BOOT_MNT/okmx6ull-s-emmc.dtb"
 
@@ -702,7 +707,6 @@ echo "================= extract rootfs A/B ================="
 
 sudo tar --numeric-owner -xpf "$ROOTFS" -C "$ROOT_A_MNT"
 sudo tar --numeric-owner -xpf "$ROOTFS" -C "$ROOT_B_MNT"
-
 
 sync
 
@@ -721,6 +725,10 @@ sudo fdisk -l "$LOOP_DEV" || true
 echo "================= verify boot files ================="
 
 ls -lh "$BOOT_MNT"
+
+echo "================= verify rootfs usage ================="
+
+df -h "$ROOT_A_MNT" "$ROOT_B_MNT" "$DATA_MNT" || true
 
 echo "================= WIC DONE ================="
 
