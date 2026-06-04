@@ -105,17 +105,18 @@ uSDHC hoạt động như một cầu nối, chuyển tiếp các giao dịch bu
 - Tương thích **SD Memory Card Specification version 3.0**, hỗ trợ Extended Capacity SD Memory Card
 - Tương thích **SDIO Card Specification version 3.0**
 - Hỗ trợ: SD Memory, miniSD Memory, SDIO, miniSDIO, SD Combo, MMC, MMC plus, MMC RS
-- Tần số clock bus thẻ lên đến **208 MHz**
+- Tần số clock bus thẻ lên đến **208 MHz** trong mode SD/SDIO UHS-I SDR104
 - Hỗ trợ chế độ **1-bit / 4-bit SD và SDIO**, chế độ **1-bit / 4-bit / 8-bit MMC**
 
-| Card / Chế độ | Tốc độ tối đa |
-|---------------|--------------|
-| SDIO 4 đường song song – SDR | 832 Mbps |
-| SDIO 4 đường song song – DDR | 400 Mbps |
-| SDXC 4 đường song song – SDR | 832 Mbps |
-| SDXC 4 đường song song – DDR | 400 Mbps |
-| MMC 8 đường song song – SDR | 416 Mbps |
-| MMC 8 đường song song – DDR | 832 Mbps |
+| Card / Chế độ | Clock tham chiếu | Cách tính | Tốc độ lý thuyết |
+|---------------|------------------|-----------|------------------|
+| SD/SDIO 4-bit high-speed SDR | 50 MHz | `50 MHz × 4 × 1` | 200 Mbit/s = 25 MB/s |
+| SD/SDIO 4-bit UHS-I SDR104 | 208 MHz | `208 MHz × 4 × 1` | 832 Mbit/s = 104 MB/s |
+| SD/SDIO 4-bit UHS-I DDR50 | 50 MHz | `50 MHz × 4 × 2` | 400 Mbit/s = 50 MB/s |
+| MMC/eMMC 8-bit SDR | 52 MHz | `52 MHz × 8 × 1` | 416 Mbit/s = 52 MB/s |
+| MMC/eMMC 8-bit DDR | 52 MHz | `52 MHz × 8 × 2` | 832 Mbit/s = 104 MB/s |
+
+> Lưu ý: `DDR` chỉ nhanh gấp đôi nếu so cùng clock. SD/SDIO DDR50 dùng clock 50 MHz nên đạt 400 Mbit/s, còn SD/SDIO SDR104 dùng clock 208 MHz nên đạt 832 Mbit/s.
 
 - Hỗ trợ đọc/ghi **single block / multi-block**
 - Hỗ trợ kích thước block từ **1 đến 4096 byte**

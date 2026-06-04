@@ -38,6 +38,7 @@ Các tài liệu đáng chú ý:
 - [Boot script index](My_doc/NXP_IMX6ULL_EVK/boot_script/index.md)
 - [imx_usb_loader](My_doc/NXP_IMX6ULL_EVK/boot_script/imx_usb_loader.md)
 - [Setup cross compilation C/Golang](My_doc/NXP_IMX6ULL_EVK/cross_compiler_C_GOLANG/setup_Cross-compilation_Environment.md)
+- [i.MX 6ULL Applications Processor Reference Manual index](My_doc/NXP_IMX6ULL_EVK/i.MX_6ULL_Applications_Processor_Reference_Manual/index.md)
 
 ### MYC-Y6ULX
 
