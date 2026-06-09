@@ -8,8 +8,11 @@
 # enable Bash nounset (`set -u`) here.
 set -eo pipefail
 
+
 HOME_DIR="$HOME"    
 LEARN_YOCTO_DIR="$HOME/yocto"
+LEARN_YOCTO_kirkstone="$HOME/yocto/imx-yocto-kirkstone"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ "$(id -u)" -eq 0 ]; then
     echo "ERROR: Do not run this script as root or with sudo."
@@ -27,6 +30,63 @@ export PAGER=cat
 # Accept the NXP/Freescale EULA non-interactively for automated setup.
 export EULA=1
 export ACCEPT_FSL_EULA=1
+
+check_and_configure_disk()
+{
+    local check_path="${1:-$PWD}"
+    local min_disk_gib="${MIN_DISK_GIB:-80}"
+    local min_free_inodes="${MIN_FREE_INODES:-500000}"
+    local available_kib
+    local available_gib
+    local available_inodes
+
+    available_kib="$(df -Pk "$check_path" | awk 'NR == 2 { print $4 }')"
+    available_gib="$((available_kib / 1024 / 1024))"
+    available_inodes="$(df -Pi "$check_path" | awk 'NR == 2 { print $4 }')"
+
+    echo "Disk check path       : $check_path"
+    echo "Available disk        : ${available_gib} GiB"
+    echo "Available inodes      : $available_inodes"
+    echo "Required free disk    : ${min_disk_gib} GiB"
+    echo "Required free inodes  : $min_free_inodes"
+
+    if [ "$available_gib" -lt "$min_disk_gib" ]; then
+        echo "ERROR: Not enough free disk space for the Yocto build."
+        exit 1
+    fi
+
+    if [ "$available_inodes" -lt "$min_free_inodes" ]; then
+        echo "ERROR: Not enough free inodes for the Yocto build."
+        exit 1
+    fi
+
+    cat >> conf/local.conf <<'EOF'
+
+# Stop safely before the Yocto build fills the filesystem.
+BB_DISKMON_DIRS = "\
+    STOPTASKS,${TMPDIR},10G,100K \
+    STOPTASKS,${DL_DIR},10G,100K \
+    STOPTASKS,${SSTATE_DIR},10G,100K \
+    STOPTASKS,/tmp,2G,100K \
+    HALT,${TMPDIR},2G,10K \
+    HALT,${DL_DIR},2G,10K \
+    HALT,${SSTATE_DIR},2G,10K \
+    HALT,/tmp,500M,10K"
+EOF
+}
+
+cleanup_build_cache()
+{
+    local build_dir="$1"
+
+    if [ "${CLEAN_BUILD_CACHE:-1}" != "1" ]; then
+        echo "Skip cleanup for $build_dir because CLEAN_BUILD_CACHE=$CLEAN_BUILD_CACHE"
+        return
+    fi
+
+    echo "Cleanup temporary Yocto cache: $build_dir/tmp $build_dir/cache"
+    rm -rf "$build_dir/tmp" "$build_dir/cache"
+}
 
 #========================================
 
@@ -93,7 +153,7 @@ MACHINE=imx6ull14x14evk \
 DISTRO=fsl-imx-fb \
 EULA=1 \
 ACCEPT_FSL_EULA=1 \
-source imx-setup-release.sh -b build-fb-emmc
+source imx-setup-release.sh -b build-fb
 
 if ! grep -qxF 'ACCEPT_FSL_EULA = "1"' conf/local.conf; then
     echo 'ACCEPT_FSL_EULA = "1"' >> conf/local.conf
@@ -104,13 +164,13 @@ if ! grep -qxF 'UBOOT_CONFIG = "emmc"' conf/local.conf; then
 fi
 
 # Use about two thirds of the logical CPUs, then limit jobs to roughly one job
-# per 2 GiB of available RAM. BUILD_JOBS can be set manually to override this.
+# per 4 GiB of available RAM. BUILD_JOBS can be set manually to override this.
 CPU_THREADS="$(nproc)"
 AVAILABLE_RAM_KIB="$(awk '/MemAvailable:/ { print $2 }' /proc/meminfo)"
 AVAILABLE_RAM_GIB="$((AVAILABLE_RAM_KIB / 1024 / 1024))"
 
 CPU_LIMIT="$((CPU_THREADS * 2 / 3))"
-RAM_LIMIT="$((AVAILABLE_RAM_GIB / 2))"
+RAM_LIMIT="$((AVAILABLE_RAM_GIB / 4))"
 
 [ "$CPU_LIMIT" -lt 1 ] && CPU_LIMIT=1
 [ "$RAM_LIMIT" -lt 1 ] && RAM_LIMIT=1
@@ -126,13 +186,27 @@ echo "CPU job limit        : $CPU_LIMIT"
 echo "RAM job limit        : $RAM_LIMIT"
 echo "Build jobs selected  : $BUILD_JOBS"
 
-sed -i '/^BB_NUMBER_THREADS = /d; /^PARALLEL_MAKE = /d' conf/local.conf
+sed -i \
+    '/^BB_NUMBER_THREADS = /d; /^PARALLEL_MAKE = /d; /^PARALLEL_MAKEINST = /d; /^PARALLEL_MAKE:pn-rust-llvm/d; /^PARALLEL_MAKE:pn-rust-llvm-native/d' \
+    conf/local.conf
 {
     echo "BB_NUMBER_THREADS = \"$BUILD_JOBS\""
     echo "PARALLEL_MAKE = \"-j $BUILD_JOBS\""
+    echo "PARALLEL_MAKEINST = \"-j $BUILD_JOBS\""
+    echo "PARALLEL_MAKE:pn-rust-llvm = \"-j 1\""
+    echo "PARALLEL_MAKE:pn-rust-llvm-native = \"-j 1\""
 } >> conf/local.conf
 
+check_and_configure_disk "$LEARN_YOCTO_kirkstone"
+
 #=============================================
-#BUILD BASE IMX6ULL AFTER
+#BUILD MINIMAL IMAGE FOR NXP IMX6ULL EVK FIRST
 #=============================================
-bitbake core-image-base
+cleanup_build_cache "$LEARN_YOCTO_kirkstone/build-fb"
+bitbake core-image-minimal
+
+#=============================================
+#next step to custom_okmx6ull_s.sh
+#=============================================
+
+"$SCRIPT_DIR/custom_okmx6ull_s.sh"
