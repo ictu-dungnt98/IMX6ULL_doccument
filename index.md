@@ -40,6 +40,10 @@ Các tài liệu đáng chú ý:
 - [Setup cross compilation C/Golang](My_doc/NXP_IMX6ULL_EVK/cross_compiler_C_GOLANG/setup_Cross-compilation_Environment.md)
 - [i.MX 6ULL Applications Processor Reference Manual index](My_doc/NXP_IMX6ULL_EVK/i.MX_6ULL_Applications_Processor_Reference_Manual/index.md)
 - [i.MX 6ULL Hardware Development Guide index](My_doc/NXP_IMX6ULL_EVK/Hardware_Development_Guide_for_the_i.MX_6ULL_Applications_Processor/index.md) — Hướng dẫn checklist thiết kế, layout PCB, board bring-up, mô hình IBIS, công cụ sản xuất và kiểm tra BSDL.
+- [`DOC_NXP/`](My_doc/NXP_IMX6ULL_EVK/DOC_NXP/) — Thư mục tài liệu NXP gốc cho i.MX6ULL.
+- [i.MX 6ULL Applications Processor Reference Manual PDF](My_doc/NXP_IMX6ULL_EVK/DOC_NXP/IMX6ULLRM.pdf) — Reference Manual đầy đủ về kiến trúc, ngoại vi, thanh ghi và bộ điều khiển của i.MX6ULL.
+- [`SCHEMATIC/`](My_doc/NXP_IMX6ULL_EVK/SCHEMATIC/) — Thư mục sơ đồ nguyên lý tham khảo của board i.MX6ULL EVK.
+- [i.MX6ULL EVK schematic PDF](My_doc/NXP_IMX6ULL_EVK/SCHEMATIC/imx6ull_a0_0211.pdf) — Sơ đồ kết nối nguồn, DDR3L, eMMC, Ethernet, USB và các ngoại vi trên board tham khảo.
 
 ### MYC-Y6ULX
 

@@ -742,7 +742,7 @@ Có 4 loại lệnh:
 | Addressed commands | ac | Không truyền dữ liệu trên DATA |
 | Addressed data transfer commands | adtc | Có truyền dữ liệu |
 
-### Bảng lệnh MMC/SD/SDIO
+### Table 58-3. Commands for MMC/SD/SDIO Cards
 
 | CMD | Type | Argument | Response | Tên | Mô tả |
 |-----|------|----------|----------|-----|-------|
