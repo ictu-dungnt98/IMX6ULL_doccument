@@ -39,7 +39,10 @@ Các tài liệu đáng chú ý:
 - [imx_usb_loader](My_doc/NXP_IMX6ULL_EVK/boot_script/imx_usb_loader.md)
 - [Setup cross compilation C/Golang](My_doc/NXP_IMX6ULL_EVK/cross_compiler_C_GOLANG/setup_Cross-compilation_Environment.md)
 - [i.MX 6ULL Applications Processor Reference Manual index](My_doc/NXP_IMX6ULL_EVK/i.MX_6ULL_Applications_Processor_Reference_Manual/index.md)
+- [Ghi chú eFuse boot uSDHC/eMMC](My_doc/NXP_IMX6ULL_EVK/i.MX_6ULL_Applications_Processor_Reference_Manual/efuse.md) — Giải thích các trường fuse chọn thiết bị boot, bus width, tốc độ, reset, điện áp và cổng uSDHC.
 - [i.MX 6ULL Hardware Development Guide index](My_doc/NXP_IMX6ULL_EVK/Hardware_Development_Guide_for_the_i.MX_6ULL_Applications_Processor/index.md) — Hướng dẫn checklist thiết kế, layout PCB, board bring-up, mô hình IBIS, công cụ sản xuất và kiểm tra BSDL.
+- [i.MX6ULL examples index](My_doc/NXP_IMX6ULL_EVK/Example/index.md) — Các ghi chú và ví dụ cấu hình thực tế cho i.MX6ULL/OKMX6ULL-S.
+- [Cấu hình DCD DDR3L cho OKMX6ULL-S](My_doc/NXP_IMX6ULL_EVK/Example/config_DCD_OKMX6ULL-S.md) — Ghi chú cấu trúc DDR3L, MMDC, AXI và timing DDR.
 - [`DOC_NXP/`](My_doc/NXP_IMX6ULL_EVK/DOC_NXP/) — Thư mục tài liệu NXP gốc cho i.MX6ULL.
 - [i.MX 6ULL Applications Processor Reference Manual PDF](My_doc/NXP_IMX6ULL_EVK/DOC_NXP/IMX6ULLRM.pdf) — Reference Manual đầy đủ về kiến trúc, ngoại vi, thanh ghi và bộ điều khiển của i.MX6ULL.
 - [`SCHEMATIC/`](My_doc/NXP_IMX6ULL_EVK/SCHEMATIC/) — Thư mục sơ đồ nguyên lý tham khảo của board i.MX6ULL EVK.
