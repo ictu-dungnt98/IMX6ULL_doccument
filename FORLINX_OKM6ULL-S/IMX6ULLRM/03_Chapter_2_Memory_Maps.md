@@ -1,0 +1,966 @@
+# Chapter 2: Memory Maps
+
+> Nguồn: `IMX6ULLRM.pdf` — trang 175–182
+
+<!-- page 175 -->
+
+Chapter 2
+Memory Maps
+2.1
+Memory system overview
+This section introduces the memory architecture of the chip.
+2.2
+ARM Platform Memory Map
+The chip memory map has been provided in the following tables.
+Table 2-1. System memory map
+Start address
+End address
+Size
+Description
+8000_0000
+FFFF_FFFF
+2048 MB
+MMDC—x16 DDR Controller.
+7000_0000
+7FFF_FFFF
+256 MB
+Reserved
+6000_0000
+6FFF_FFFF
+256 MB
+QSPI1 Memory
+5800_0000
+5FFF_FFFF
+128 MB
+EIM Aliased
+5000_0000
+57FF_FFFF
+128 MB
+EIM (NOR/SRAM)
+1000_0000
+4FFF_FFFF
+1024 MB
+Reserved
+0E00_0000
+0FFF_FFFF
+32 MB
+Reserved
+0C00_0000
+0DFF_FFFF
+32 MB
+QSPI1 Rx Buffer
+0900_0000
+0BFF_FFFF
+48 MB
+Reserved
+0800_0000
+08FF_FFFF
+16 MB
+Reserved
+02C0_0000
+07FF_FFFF
+84 MB
+Reserved
+0230_0000
+02BF_FFFF
+9 MB
+Reserved
+0220_0000
+022F_FFFF
+1 MB
+Table 2-4 AIPS-3. See IP listing on the separate map.
+0210_0000
+021F_FFFF
+1 MB
+Table 2-3 AIPS-2. See the IP listing on the separate
+map.
+0200_0000
+020F_FFFF
+1 MB
+Table 2-2 AIPS-1. See the IP listing on the separate
+map.
+0181_0000
+01FF_FFFF
+8128 KB
+Reserved
+0180_C000
+0180_FFFF
+16 KB
+Reserved
+Table continues on the next page...
+i.MX 6ULL Applications Processor Reference Manual, Rev. 1, 11/2017
+NXP Semiconductors
+175
+
+<!-- page 176 -->
+
+Table 2-1. System memory map (continued)
+Start address
+End address
+Size
+Description
+0180_8000
+0180_BFFF
+16 KB
+BCH
+0180_6000
+0180_7FFF
+8 KB
+GPMI
+0180_4000
+0180_5FFF
+32 KB
+APBH DMA
+0180_0000
+0180_3FFF
+16 KB
+Reserved
+0120_0000
+017F_FFFF
+6 MB
+Reserved
+0110_0000
+011F_FFFF
+1 MB
+Reserved
+0100_0000
+010F_FFFF
+1 MB
+Reserved
+00F0_0000
+00FF_FFFF
+1 MB
+Reserved
+00E0_0000
+00EF_FFFF
+1 MB
+(per_m) configuration port
+00D0_0000
+00DF_FFFF
+1 MB
+(cpu) configuration port
+00C0_0000
+00CF_FFFF
+1 MB
+GPV_1 PL301
+00B0_0000
+00BF_FFFF
+1 MB
+GPV_0 PL301 configuration port
+00A0_8000
+00AF_FFFF
+992 KB
+Reserved
+00A0_0000
+00A0_7FFF
+32 KB
+ARM Peripherals: GIC400 Only visible to ARM core(s)
+009C_0000
+009F_FFFF
+256 KB
+Reserved
+0098_0000
+009B_FFFF
+256 KB
+Reserved
+0092_0000
+0097_FFFF
+384 KB
+OCRAM aliased
+0090_0000
+0091_FFFF
+128 KB
+OCRAM 128 KB
+008F_8000
+008F_FFFF
+32 KB
+Reserved
+007F_8000
+008F_7FFF
+1 MB
+Reserved
+0010_0000
+0010_7FFF
+32 KB
+Reserved
+0001_8000
+000F_FFFF
+928 KB
+Reserved
+0001_7000
+0001_7FFF
+4 KB
+Boot ROM—Protected 4 KB area
+0000_0000
+0001_6FFF
+92 KB
+Boot ROM (ROMCP)
+The table below shows the ARM IP Bus (AIPS) detailed memory map.
+Table 2-2. AIPS-1 memory map
+Start Address
+End Address
+Region
+NIC Port
+Size
+020F_C000
+020F_FFFF
+AIPS-1
+PWM8
+16 KB
+020F_8000
+020F_BFFF
+PWM7
+16 KB
+020F_4000
+020F_7FFF
+PWM6
+16 KB
+020F_0000
+020F_3FFF
+PWM5
+16 KB
+020E_C000
+020E_FFFF
+SDMA
+16 KB
+020E_8000
+020E_BFFF
+GPT2
+16 KB
+020E_4000
+020E_7FFF
+IOMUXC_GPR
+16 KB
+020E_0000
+020E_3FFF
+IOMUXC
+16 KB
+020D_C000
+020D_FFFF
+GPC
+16 KB
+Table continues on the next page...
+ARM Platform Memory Map
+i.MX 6ULL Applications Processor Reference Manual, Rev. 1, 11/2017
+176
+NXP Semiconductors
+
+<!-- page 177 -->
+
+Table 2-2. AIPS-1 memory map (continued)
+Start Address
+End Address
+Region
+NIC Port
+Size
+020D_8000
+020D_BFFF
+SRC
+16 KB
+020D_4000
+020D_7FFF
+EPIT2
+16 KB
+020D_0000
+020D_3FFF
+EPIT1
+16 KB
+020C_C000
+020C_FFFF
+SNVS_HP
+16 KB
+020C_8000
+020C_8FFF
+ANALOG_DIG
+16 KB
+020C_4000
+020C_7FFF
+CCM
+16 KB
+020C_0000
+020C_3FFF
+WDOG2
+16 KB
+020B_C000
+020B_FFFF
+WDOG1
+16 KB
+020B_8000
+020B_BFFF
+KPP
+16 KB
+020B_4000
+020B_7FFF
+ENET2
+16 KB
+020B_0000
+020B_3FFF
+SNVS_LP
+16 KB
+020A_C000
+020A_FFFF
+GPIO5
+16 KB
+020A_8000
+020A_BFFF
+GPIO4
+16 KB
+020A_4000
+020A_7FFF
+GPIO3
+16 KB
+020A_0000
+020A_3FFF
+GPIO2
+16 KB
+0209_C000
+0209_FFFF
+AIPS-1
+GPIO1
+16 KB
+0209_8000
+0209_BFFF
+GPT1
+16 KB
+0209_4000
+0209_7FFF
+CAN2
+16 KB
+0209_0000
+0209_3FFF
+CAN1
+16 KB
+0208_C000
+0208_FFFF
+PWM4
+16 KB
+0208_8000
+0208_BFFF
+PWM3
+16 KB
+0208_4000
+0208_7FFF
+PWM2
+16 KB
+0208_0000
+0208_3FFF
+PWM1
+16 KB
+0207_C000
+0207_FFFF
+AIPS-1 Configuration
+16 KB
+0204_8000
+0207_BFFF
+AIPS-1 Glob. Module
+enable
+Reserved
+208 KB
+0204_4000
+0204_7FFF
+Reserved
+16 KB
+0204_0000
+0204_3FFF
+TOUCH_CTRL
+16 KB
+0203_C000
+0203_FFFF
+AIPS-1 (via SPBA)
+Glob,Module ENABLE
+SPBA
+16 KB
+0203_8000
+0203_BFFF
+Reserved for SDMA
+internal registers
+16 KB
+0203_4000
+0203_7FFF
+ASRC
+16 KB
+0203_0000
+0203_3FFF
+SAI3
+16 KB
+0202_C000
+0202_FFFF
+SAI2
+16 KB
+0202_8000
+0202_BFFF
+SAI1
+16 KB
+0202_4000
+0202_7FFF
+ESAI
+16 KB
+0202_0000
+0202_3FFF
+UART1
+16 KB
+0201_C000
+0201_FFFF
+Reserved for SDMA
+internal registers
+16 KB
+0201_8000
+0201_BFFF
+UART7
+16 KB
+0201_4000
+0201_7FFF
+eCSPI4
+16 KB
+Table continues on the next page...
+Chapter 2 Memory Maps
+i.MX 6ULL Applications Processor Reference Manual, Rev. 1, 11/2017
+NXP Semiconductors
+177
+
+<!-- page 178 -->
+
+Table 2-2. AIPS-1 memory map (continued)
+Start Address
+End Address
+Region
+NIC Port
+Size
+0201_0000
+0201_3FFF
+eCSPI3
+16 KB
+0200_C000
+0200_FFFF
+eCSPI2
+16 KB
+0200_8000
+0200_BFFF
+eCSPI1
+16 KB
+0200_4000
+0200_7FFF
+SPDIF
+16 KB
+0200_0000
+0200_3FFF
+Reserved for SDMA
+internal registers
+16 KB
+The table below shows the AIPS-2 detailed memory map.
+Table 2-3. AIPS-2 memory map
+Start Address
+End Address
+Region
+Allocation
+Size
+021F_C000
+021F_FFFF
+AIPS-2
+UART6
+16 KB
+021F_8000
+021F_BFFF
+I2C4
+16 KB
+021F_4000
+021F_7FFF
+UART5
+16 KB
+021F_0000
+021F_3FFF
+UART4
+16 KB
+021E_C000
+021E_FFFF
+UART3
+16 KB
+021E_8000
+021E_BFFF
+UART2
+16 KB
+021E_4000
+021E_7FFF
+WDOG3
+16 KB
+021E_0000
+021E_3FFF
+QSPI
+16 KB
+021D_C000
+021D_FFFF
+System Counter_CTRL
+16 KB
+021D_8000
+021D_BFFF
+System Counter_CMP
+16 KB
+021D_4000
+021D_7FFF
+System Counter_RD
+16 KB
+021D_0000
+021D_3FFF
+TZASC
+16 KB
+021C_C000
+021C_FFFF
+PXP
+16 KB
+021C_8000
+021C_BFFF
+LCDIF
+16 KB
+021C_4000
+021C_7FFF
+CSI
+16 KB
+021C_0000
+021C_3FFF
+CSU
+16 KB
+021B_C000
+021B_FFFF
+OCOTP_CTRL
+16 KB
+021B_8000
+021B_BFFF
+EIM
+16 KB
+021B_4000
+021B_7FFF
+Reserved
+16 KB
+021B_0000
+021B_3FFF
+AIPS-2
+MMDC
+16 KB
+021A_C000
+021A_FFFF
+ROMCP
+16 KB
+021A_8000
+021A_BFFF
+I2C3
+16 KB
+021A_4000
+021A_7FFF
+I2C2
+16 KB
+021A_0000
+021A_3FFF
+I2C1
+16 KB
+0219_C000
+0219_FFFF
+ADC2
+16 KB
+0219_8000
+0219_BFFF
+ADC1
+16 KB
+0219_4000
+0219_7FFF
+uSDHC2
+16 KB
+0219_0000
+0219_3FFF
+uSDHC1
+16 KB
+Table continues on the next page...
+ARM Platform Memory Map
+i.MX 6ULL Applications Processor Reference Manual, Rev. 1, 11/2017
+178
+NXP Semiconductors
+
+<!-- page 179 -->
+
+Table 2-3. AIPS-2 memory map (continued)
+Start Address
+End Address
+Region
+Allocation
+Size
+0218_C000
+0218_FFFF
+Reserved
+16 KB
+0218_8000
+0218_BFFF
+ENET1
+16 KB
+0218_4000
+0218_7FFF
+USBO2 (USB)
+16 KB
+0218_0000
+0218_3FFF
+USBO2 (pl301)
+16 KB
+0217_C000
+0217_FFFF
+AIPS-2 configuration
+16 KB
+0214_0000
+0217_BFFF
+Reserved
+240 KB
+The table below shows the AIPS-3 detailed memory map.
+Table 2-4. AIPS-3 memory map
+Start Address
+End Address
+Region
+Allocation
+Size
+022F_C000
+022F_FFFF
+AIPS-3
+Reserved
+16 KB
+022F_8000
+022F_BFFF
+Reserved
+16 KB
+022F_4000
+022F_7FFF
+Reserved
+16 KB
+022F_0000
+022F_3FFF
+Reserved
+16 KB
+022E_C000
+022E_FFFF
+Reserved
+16 KB
+022E_8000
+022E_BFFF
+Reserved
+16 KB
+022E_4000
+022E_7FFF
+Reserved
+16 KB
+022E_0000
+022E_3FFF
+Reserved
+16 KB
+022D_C000
+022D_FFFF
+Reserved
+16 KB
+022D_8000
+022D_BFFF
+Reserved
+16 KB
+022D_4000
+022D_7FFF
+Reserved
+16 KB
+022D_0000
+022D_3FFF
+Reserved
+16 KB
+022C_C000
+022C_FFFF
+Reserved
+16 KB
+022C_8000
+022C_BFFF
+Reserved
+16 KB
+022C_4000
+022C_7FFF
+Reserved
+16 KB
+022C_0000
+022C_3FFF
+Reserved
+16 KB
+022B_C000
+022B_FFFF
+Reserved
+16 KB
+022B_8000
+022B_BFFF
+Reserved
+16 KB
+022B_4000
+022B_7FFF
+Reserved
+16 KB
+022B_0000
+022B_3FFF
+Reserved
+16 KB
+022A_C000
+022A_FFFF
+Reserved
+16 KB
+022A_8000
+022A_BFFF
+Reserved
+16 KB
+022A_4000
+022A_7FFF
+Reserved
+16 KB
+022A_0000
+022A_3FFF
+Reserved
+16 KB
+0229_C000
+0229_FFFF
+Reserved
+16 KB
+0229_8000
+0229_BFFF
+Reserved
+16 KB
+0229_4000
+0229_7FFF
+SNVS_GPR
+16 KB
+0229_0000
+0229_3FFF
+IOMUXC_SNVS
+16 KB
+Table continues on the next page...
+Chapter 2 Memory Maps
+i.MX 6ULL Applications Processor Reference Manual, Rev. 1, 11/2017
+NXP Semiconductors
+179
+
+<!-- page 180 -->
+
+Table 2-4. AIPS-3 memory map (continued)
+Start Address
+End Address
+Region
+Allocation
+Size
+0228_C000
+0228_FFFF
+EPDC
+16 KB
+0228_8000
+0228_BFFF
+UART8
+16 KB
+0228_4000
+0228_7FFF
+RNGB
+16 KB
+0228_0000
+0228_3FFF
+DCP
+16 KB
+0227_C000
+0227_FFFF
+AIPS-3 Configuration
+16 KB
+0224_0000
+0227_BFFF
+Reserved
+240 KB
+0220_0000
+0223_FFFF
+Reserved
+256 KB
+The table below shows the Debug Access Port (DAP) detailed memory map.
+Table 2-5. DAP memory map
+Start Address
+End Address
+Region
+Allocation
+Size
+0213_F000
+0213_FFFF
+CA7_DAP
+Reserved
+4 KB
+0213_E000
+0213_EFFF
+Reserved
+4 KB
+0213_D000
+0213_DFFF
+Reserved
+4 KB
+0213_C000
+0213_CFFF
+ETM0
+4 KB
+0213_B000
+0213_BFFF
+Reserved
+4 KB
+0213_A000
+0213_AFFF
+Reserved
+4 KB
+0213_9000
+0213_9FFF
+Reserved
+4 KB
+0213_8000
+0213_8FFF
+CTI0
+4 KB
+0213_7000
+0213_7FFF
+Reserved
+4 KB
+0213_6000
+0213_6FFF
+Reserved
+4 KB
+0213_5000
+0213_5FFF
+Reserved
+4 KB
+0213_4000
+0213_4FFF
+Reserved
+4 KB
+0213_3000
+0213_3FFF
+Reserved
+4 KB
+0213_2000
+0213_2FFF
+Reserved
+4 KB
+0213_1000
+0213_1FFF
+CPU0 PMU
+4 KB
+0213_0000
+0213_0FFF
+CPU0 Debug
+4 KB
+0212_1000
+0212_FFFF
+Reserved
+60 KB
+0212_0000
+0212_0FFF
+CA7 ROM Table
+4 KB
+0212_8000
+0212_FFFF
+Reserved
+96 KB
+0210_7000
+0210_7FFF
+Reserved
+4 KB
+0210_6000
+0210_6FFF
+Reserved
+4 KB
+0210_5000
+0210_5FFF
+Reserved
+4 KB
+0210_4000
+0210_4FFF
+TSGEN
+4 KB
+0210_3000
+0210_3FFF
+TPIU
+4 KB
+0210_2000
+0210_2FFF
+CTI
+4 KB
+0210_1000
+0210_1FFF
+ETF
+4 KB
+0210_0000
+0210_0FFF
+DAP ROM Table
+4 KB
+ARM Platform Memory Map
+i.MX 6ULL Applications Processor Reference Manual, Rev. 1, 11/2017
+180
+NXP Semiconductors
+
+<!-- page 181 -->
+
+NOTE
+Accessing the reserved memory regions can result in
+unpredictable behavior.
+2.3
+DMA memory map
+The Smart DMA memory map is shown in the following table.
+Table 2-6. SDMA peripheral memory map
+Peripheral
+Base address
+Size
+Reserved for SDMA internal memory
+0x0000
+4 KB
+SPDIF
+0x1000
+4 KB
+eCSPI1
+0x2000
+4 KB
+eCSPI2
+0x3000
+4 KB
+eCSPI3
+0x4000
+4 KB
+eCSPI4
+0x5000
+4 KB
+UART7
+0x6000
+4 KB
+Reserved for SDMA internal registers
+0x7000
+4 KB
+UART1
+0x8000
+4 KB
+ESAI
+0x9000
+4 KB
+SAI1
+0xA000
+4 KB
+SAI2
+0xB000
+4 KB
+SAI3
+0xC000
+4 KB
+ASRC
+0xD000
+4 KB
+Reserved
+0xE000
+4 KB
+SPBA Registers
+0xF000
+4 KB
+NOTE
+Accessing the reserved memory regions can result in an
+unpredictable behavior.
+Chapter 2 Memory Maps
+i.MX 6ULL Applications Processor Reference Manual, Rev. 1, 11/2017
+NXP Semiconductors
+181
+
+<!-- page 182 -->
+
+DMA memory map
+i.MX 6ULL Applications Processor Reference Manual, Rev. 1, 11/2017
+182
+NXP Semiconductors
+
